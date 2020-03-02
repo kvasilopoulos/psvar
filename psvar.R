@@ -38,15 +38,13 @@ VARNA$t <- nrow(VARS)
 VARNA$n <- ncol(VARS)
 VARNA$k <- ncol(MSHOCKS)
 
-
-# Run Reduced-form VAR
+# Reduced-form VAR
 matX <- cbind(VARSLAGS, VARNA$DET[-c(1:VARNA$p), ])
-bet <- inv(crossprod(matb)) %*% crossprod(matX, VARS)
+bet <- reg_xy(matb, VARS)
 res <- VARS - matX %*% bet
 sigma <- VARNA$Sigma <- crossprod(res)/(VARNA$t - VARNA$n*VARNA$p - 1)
 
 # Narrative Identification
-
 LAMb = inv(crossprod(MSHOCKS)) %*% crossprod(MSHOCKS, res)
 LAMb11  = LAMb[1:VARNA$k, 1:VARNA$k]
 LAMb21  = LAMb[1:VARNA$k, (VARNA$k+1):VARNA$n]

@@ -27,6 +27,6 @@ inv <- function(x) {
   # chol2inv(chol(x))
 }
 
-mat_div <- function(x, y) {
+mat_div <- reg_xy <- function(x, y) {
   inv(crossprod(x)) %*% crossprod(x, y)
 }
