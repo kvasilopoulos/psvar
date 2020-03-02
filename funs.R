@@ -23,10 +23,14 @@ lagmatrix <- function(x, lags = 1) {
 
 inv <- function(x) {
   # solve(x)
-  qr.solve(x)
-  # chol2inv(chol(x))
+  # qr.solve(x)
+  chol2inv(chol(x))
 }
 
 mat_div <- function(x, y) {
+  inv(crossprod(x)) %*% crossprod(x, y)
+}
+
+right_div <- function(x, y) {
   inv(crossprod(x)) %*% crossprod(x, y)
 }
