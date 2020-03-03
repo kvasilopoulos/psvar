@@ -35,7 +35,7 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   # Narrative Identification
   LAMb = reg_xy(MSHOCKS, res)
   LAMb11  = LAMb[1:VARNA$k, 1:VARNA$k]
-  LAMb21  = LAMb[1:VARNA$k, (VARNA$k+1):VARNA$n]
+  LAMb21  = LAMb[1:VARNA$k, (VARNA$k + 1):VARNA$n]
   
   # Restriction
   b21ib11 <- t(reg_xy(LAMb11, LAMb21))
