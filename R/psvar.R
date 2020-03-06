@@ -25,7 +25,7 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   
   # Reduced-form VAR
   matX <- cbind(VARSLAGS, VARNA$DET[-c(1:VARNA$p), ])
-  bet <- reg_xy(matX, VARS)
+  bet <- VARNA$bet <- reg_xy(matX, VARS)
   res <- VARS - matX %*% bet
   
   
@@ -101,6 +101,13 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
       VARNA$irsTRY <- VARNA$irs[, 1, ] - VARNA$irs[, 3, ]
     }
   }
+  
+  e <- t(reg_xy(VARNA$D[,,1], t(res)))
+  VARNA$et <- e[,1:VARNA$k]
+  VARNA$e <- e[, (VARNA$k + 1):VARNA$n]
+  VARNA$b11eT <- t(VARNA$D[1:VARNA$k, 1:VARNA$k, 1] %*% t(e[, 1:VARNA$k]))
+  VARNA$b21ib11   = b21ib11
+  
   colnames(VARNA$irs) <- colnames(VARNA$vars)
   class(VARNA) <- "psvar"
   VARNA
