@@ -12,7 +12,7 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   VARNA$mshocks <- as.matrix(mshock)
   
   # Demean the shock
-  VARNA$mshocks - mean(VARNA$mshocks, na.rm = TRUE)
+  # VARNA$mshocks - mean(VARNA$mshocks, na.rm = TRUE)
   VARNA$mshocksize <- shocksize
   
   VARSLAGS <- lagmatrix(VARNA$vars, VARNA$p)
@@ -27,20 +27,20 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   matX <- cbind(VARSLAGS, VARNA$DET[-c(1:VARNA$p), ])
   bet <- VARNA$bet <- reg_xy(matX, VARS)
   res <- VARS - matX %*% bet
-  
-  
   sigma <- VARNA$Sigma <- crossprod(res) / (VARNA$t - VARNA$n * VARNA$p - 1)
+  
+  # Identification
+  PhiB = reg_xy(MSHOCKS, res)
+  Phib11  = PhiB[1:VARNA$k, 1:VARNA$k]
+  Phib21  = PhiB[1:VARNA$k, (VARNA$k + 1):VARNA$n]
+  
+  # Split up Sigma
   Sig11 <- VARNA$Sigma[1:VARNA$k, 1:VARNA$k]
   Sig21 <- VARNA$Sigma[(VARNA$k + 1):VARNA$n, 1:VARNA$k, drop = FALSE]
   Sig22 <- VARNA$Sigma[(VARNA$k + 1):VARNA$n, (VARNA$k + 1):VARNA$n]
   
-  # Narrative Identification
-  LAMb = reg_xy(MSHOCKS, res)
-  LAMb11  = LAMb[1:VARNA$k, 1:VARNA$k]
-  LAMb21  = LAMb[1:VARNA$k, (VARNA$k + 1):VARNA$n]
-  
   # Restriction
-  b21ib11 <- t(reg_xy(LAMb11, LAMb21))
+  b21ib11 <- t(reg_xy(Phib11, Phib21))
   ZZp <- b21ib11 %*% Sig11 %*% t(b21ib11) - (Sig21 %*% t(b21ib11) + b21ib11 %*% t(Sig21)) + Sig22
   b12b12p <- t(Sig21 - b21ib11 %*% Sig11) %*% mat_div(ZZp, (Sig21 - b21ib11 %*% Sig11))
   b11b11p <- Sig11 - b12b12p
@@ -62,12 +62,12 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   
   VARNA$gammaT <- t(b21iSig[1, ])
   
-  F2 <- b22[2, 1] / VARNA$sigmaG - b21iSig[2, ] %*% VARNA$thetaG
-  F1 <- t(-F2 %*% t(VARNA$gammaT) + (1 - t(VARNA$gammaT) %*% VARNA$thetaG) %*% b21iSig[2.])
-  VARNA$zetaT <- mat_div(eye(VARNA$k) %*% (1 - t(VARNA$gammaT) %*% VARNA$thetaG) + F1 %*% t(VARNA$thetaY), F1)
-  VARNA$zetaG <- mat_div((1 - t(VARNA$zetaT) %*% VARNA$thetaY), (1 - t(VARNA$gammaT) %*% VARNA$thetaG) %*% F2)
-  VARNA$sigmaY <- (1 - t(VARNA$zetaT) %*% VARNA$thetaY) %*% b22[2, 2]
-  SigmaTSigmaTp <- mat_div(b11iSig, b11b11p) %*% solve(t(b11iSig))
+  # F2 <- b22[2, 1] / VARNA$sigmaG - b21iSig[2, ] %*% VARNA$thetaG
+  # F1 <- t(-F2 %*% t(VARNA$gammaT) + (1 - t(VARNA$gammaT) %*% VARNA$thetaG) %*% b21iSig[2.])
+  # VARNA$zetaT <- mat_div(eye(VARNA$k) %*% (1 - t(VARNA$gammaT) %*% VARNA$thetaG) + F1 %*% t(VARNA$thetaY), F1)
+  # VARNA$zetaG <- mat_div((1 - t(VARNA$zetaT) %*% VARNA$thetaY), (1 - t(VARNA$gammaT) %*% VARNA$thetaG) %*% F2)
+  # VARNA$sigmaY <- (1 - t(VARNA$zetaT) %*% VARNA$thetaY) %*% b22[2, 2]
+  # SigmaTSigmaTp <- mat_div(b11iSig, b11b11p) %*% solve(t(b11iSig))
   
   
   
