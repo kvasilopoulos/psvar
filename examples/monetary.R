@@ -5,7 +5,6 @@ library(tidyverse)
 boot_obj <- psvar_boot(vardata = ramey_econ214[, c(5, 2, 4, 6)], mshock = ramey_econ214[, 10], p = 12, irhor = 50)
 plot_psvar(boot_obj, probs = c(0.1, 0.9))
 
-
 # Gertler Karadi ----------------------------------------------------------
 
 attributes(ramey2016)$info %>% 

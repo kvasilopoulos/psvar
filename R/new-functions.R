@@ -44,6 +44,7 @@ id_proxy <- function(model, mshocks) {
   betaIV2 <- betaIV[1:k, (k + 1):n]
   
   b21ib11 <- t(reg_xy(betaIV1, betaIV2))
+  def <- SigmaU21 - b21ib11 %*% SigmaU11
   Z <- b21ib11 %*% SigmaU11 %*% t(b21ib11) - (SigmaU21 %*% t(b21ib11) + b21ib11 %*% t(SigmaU21)) + SigmaU22
   b12b12p <- t(SigmaU21 - b21ib11 %*% SigmaU11) %*% mat_div(Z, (SigmaU21 - b21ib11 %*% SigmaU11))
   b11b11p <- SigmaU11 - b12b12p

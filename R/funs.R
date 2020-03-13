@@ -6,7 +6,6 @@ ones <- function(n, p = NULL) {
   }
 }
 
-
 zeros <- function(n, p = NULL) {
   if (missing(p)) {
     matrix(0, nrow = n, ncol = n)
@@ -35,10 +34,6 @@ inv <- function(x) {
   # chol2inv(chol(x))
 }
 
-mat_div <- reg_xy <- function(x, y) {
-  inv(crossprod(x)) %*% crossprod(x, y)
-}
-
-right_div <- function(x, y) {
+right_div <-mat_div <- reg_xy <- function(x, y) {
   inv(crossprod(x)) %*% crossprod(x, y)
 }

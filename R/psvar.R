@@ -184,3 +184,4 @@ plot_psvar <- function(boot_obj, probs = c(0.34, 0.66)) {
     theme_bw()
 }
 
+
