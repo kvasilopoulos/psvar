@@ -1,6 +1,6 @@
-
-# psvar(data = DATA[, c(5, 2, 4, 6)], mshock = DATA[, 10])
-# 
+# DATA <- ramey_econ214
+# VAR <- psvar(data = DATA[, c(5, 2, 4, 6)], mshock = DATA[, 10])
+# # 
 # # Data preparation --------------------------------------------------------
 # 
 # 

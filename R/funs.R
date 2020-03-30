@@ -6,6 +6,13 @@ ones <- function(n, p = NULL) {
   }
 }
 
+zeros <- function(n, p = NULL) {
+  if (missing(p)) {
+    matrix(0, nrow = n, ncol = n)
+  }else{
+    matrix(0, nrow = n, ncol = p)
+  }
+}
 
 eye <- function(n, p = NULL) {
   if (missing(p)) {
@@ -22,15 +29,11 @@ lagmatrix <- function(x, lags = 1) {
 }
 
 inv <- function(x) {
-  # solve(x)
+  solve(x)
   # qr.solve(x)
-  chol2inv(chol(x))
+  # chol2inv(chol(x))
 }
 
-mat_div <- reg_xy <- function(x, y) {
-  inv(crossprod(x)) %*% crossprod(x, y)
-}
-
-right_div <- function(x, y) {
+right_div <-mat_div <- reg_xy <- function(x, y) {
   inv(crossprod(x)) %*% crossprod(x, y)
 }

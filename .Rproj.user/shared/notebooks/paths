@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 C:/Users/T460p/Documents/R/psvar/.Rbuildignore="C8DCA486"
 C:/Users/T460p/Documents/R/psvar/DESCRIPTION="376DCE66"
 C:/Users/T460p/Documents/R/psvar/NAMESPACE="AA520085"
@@ -12,3 +13,13 @@ C:/Users/T460p/Documents/R/psvar/README.Rmd="15B53E4B"
 C:/Users/T460p/Documents/R/psvar/README.md="5309C41B"
 C:/Users/T460p/Documents/R/psvar/data-raw/DATASET.R="63778EA0"
 C:/Users/T460p/Documents/R/psvar/examples/monetary.R="5190F610"
+=======
+D:/psvar/R/boot.R="6EA6D5C9"
+D:/psvar/R/include.R="5082E616"
+D:/psvar/R/new-functions.R="A4C0F0B8"
+D:/psvar/R/psvar_single.R="A202AB4C"
+D:/psvar/README.Rmd="8A0D92CB"
+D:/psvar/README.md="CFA970D8"
+D:/psvar/data-raw/DATASET.R="71E8F8A8"
+D:/psvar/examples/monetary.R="E81B7105"
+>>>>>>> 5087ed39890fb91848a4ad98fd0eed0363eb3c9f

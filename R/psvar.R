@@ -1,9 +1,9 @@
 
 #' @export
-psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
+psvar <- function(vardata, mshock, p = 12, irhor = 48, shocksize = 1) {
   
   VARNA <- list()
-  VARNA$vars <- as.matrix(data)
+  VARNA$vars <- as.matrix(vardata)
   VARNA$p <- p
   t <- nrow(VARNA$vars)
   n <- ncol(VARNA$vars)
@@ -112,4 +112,76 @@ psvar <- function(data, mshock, p = 12, irhor = 48, shocksize = 1) {
   class(VARNA) <- "psvar"
   VARNA
 }
+
+
+psvar_boot <- function(vardata = ramey_econ214[, c(5, 2, 4, 6)],
+                       mshock = ramey_econ214[, 10],
+                       p = 12,
+                       irhor = 20,
+                       shocksize = 1,
+                       nboot = 500
+) {
+  
+  VAR <- psvar(vardata, mshock, p = p, shocksize = shocksize, irhor = irhor)
+  birs <- array(numeric(), c(VAR$irhor, VAR$n, nboot, VAR$k))
+  for(jj in 1:nboot) {
+    rr <- 1 - 2 * (runif(VAR$t) > 0.5)
+    eb <- VAR$e* (rr %*% ones(1, VAR$n-VAR$k))
+    b11eTb = VAR$b11eT * (rr %*% ones(1, VAR$k))
+    
+    resb =  rbind(eye(VAR$k), VAR$b21ib11) %*% t(b11eTb) + VAR$D[, (VAR$k + 1):VAR$n, 1] %*% t(eb)
+    
+    varsb = zeros(VAR$p+VAR$t, VAR$n)
+    varsb[1:VAR$p, ] = VAR$vars[1:VAR$p, ]
+    for(j in (VAR$p + 1):(VAR$p + VAR$t)) {
+      lvars <- t(varsb[seq(j - 1, j - VAR$p, -1), ])
+      varsb[j,] <- t(c(lvars)) %*% VAR$bet[1:(VAR$p * VAR$n), ] +
+        VAR$DET[j, ] %*% VAR$bet[(VAR$p * VAR$n + 1):nrow(VAR$bet), ] +
+        t(resb[, j - VAR$p])
+    }
+    
+    mshocksb <- rbind(VAR$mshocks[1:VAR$p,, drop = FALSE], VAR$mshocks[-c(1:VAR$p),] * (rr %*% ones(1, VAR$k)))
+    VARBS <- psvar(varsb, p = p, irhor = irhor, shocksize = shocksize, mshock = mshocksb)
+    
+    for(j in 1:VAR$k) {
+      birs[,,jj,j] <- VARBS$irs[,,j]
+    }
+  }
+  list(
+    irs = VAR$irs,
+    birs = birs
+  )
+}
+
+format_long  <- function(x) {
+  as.data.frame(x) %>%
+    mutate(horizon = 1:nrow(.)) %>%
+    pivot_longer(-horizon)
+}
+
+plot_psvar <- function(boot_obj, probs = c(0.34, 0.66)) {
+  irs <- boot_obj$irs[,,1]
+  birs <- boot_obj$birs[,,,1]
+  
+  pr <- apply(birs, c(1,2), quantile, probs = probs)
+  lower <- pr[1,,]
+  upper <- pr[2,,]
+  
+  library(purrr)
+  
+  list(irs, lower, upper) %>%
+    map(`colnames<-`, colnames(irs)) %>%
+    map(format_long) %>%
+    reduce(full_join, by = c("horizon", "name")) %>%
+    arrange(name) %>% 
+    set_names(c("horizon", "name", "irf", "lower", "upper")) %>%
+    ggplot() +
+    geom_hline(aes(yintercept = 0)) +
+    geom_line(aes(horizon, irf)) +
+    geom_line(aes(horizon, lower), linetype = "dashed") +
+    geom_line(aes(horizon, upper), linetype = "dashed") +
+    facet_wrap(~name, scales = "free_y") +
+    theme_bw()
+}
+
 
