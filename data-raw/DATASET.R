@@ -15,7 +15,6 @@ attr(ramey_econ214, "info") <- info_ramey_econ214
 usethis::use_data(ramey_econ214, overwrite = TRUE)
 
 
-
 # Ramey 2016 --------------------------------------------------------------
 
 ramey2016 <- readxl::read_excel("data-raw/RAMEY_MACROECONOMICS_SHOCKS.xlsx", sheet = "Monthly") %>% 
