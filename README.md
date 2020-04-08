@@ -12,12 +12,29 @@
 
 ``` r
 library(psvar)
-model <- estimate_var(ramey_econ214[, c(5, 2, 4, 6)], p = 12) 
-irfs <- irf_psvar(model, ramey_econ214[, 10], irhor = 50)
+dat <- ramey_econ214[, c(5, 2, 4, 6)]
+inst <- ramey_econ214[, 10]
+```
+
+``` r
+model <- estimate_var(dat, p = 12) 
+irfs <- irf_psvar(model, m = inst, irhor = 50)
 plot_psvar(irfs)
 ```
 
-<img src="man/figures/README-use-case-1.png" width="100%" />
+<img src="man/figures/README-irfs-1.png" width="100%" />
+
+``` r
+fstat("FFR", exo = c("FFR", "LIP", "LCPI", "LPCOM"), inst = "RRSHOCK",
+      lags = 12, data = cbind(dat, inst))
+#> $Fn
+#>          [,1]
+#> [1,] 93.30112
+#> 
+#> $Fr
+#>          [,1]
+#> [1,] 11.52777
+```
 
 ## Installation
 

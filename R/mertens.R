@@ -4,7 +4,7 @@ estimate_var <- function(Y, p = 2) {
   YY <- as.matrix(Y)
   n <- ncol(YY)
   t <- nrow(YY)
-  lmatY <- lagmatrix(YY, lags = p)
+  lmatY <- mat_lag(YY, lags = p)
   matY <- YY[-c(1:p), ]
   matX <- cbind(1, lmatY)
   
@@ -18,6 +18,48 @@ estimate_var <- function(Y, p = 2) {
     res = res, bet = bet,
     t = t, n = n, p = p
   )
+}
+
+#' @export
+calc_fstat <- function(Y, m, p = 2) {
+  dt <- cbind(Y, m) 
+  nms <- colnames(dt)
+  idm <- length(nms)
+  all_fstat <- list()
+  for (i in 1:length(nms)) {
+    all_fstat[[i]] <- fstat(endog = nms[1], exo = nms[-idm], inst = nms[idm],  
+                            lags = p, data = dt)
+  }
+  all_fstat
+}
+
+
+#' @importFrom sandwich vcovHC
+#' @export
+fstat <- function(endog, exo, inst, lags = 2, data) {
+  
+  exo_vars <- tbl_lag(data[,exo, drop = FALSE], dimension = lags)
+  endo_vars <- data[,endog, drop = FALSE]
+  inst_vars <- data[,inst, drop = FALSE]
+  full_data <- cbind(endo_vars, inst_vars, exo_vars)
+  rhs <- paste(c(inst, names(exo_vars)), collapse = " + ")
+  form <- paste(endog, "~", rhs)
+  
+  model <- lm(formula = form, data = full_data)
+  coefnames <- names(model$coefficients)
+  idx <- which(inst ==  coefnames)
+  vcov <- vcov(model) # sigma_v_sq / n
+  # homoskedastic case
+  vcov_n <- sandwich::vcovHC(model, type = "const") # sigma_v_sq  * Qzz_inv / n
+  # heteroskedastic case
+  vcov_r <-  sandwich::vcovHC(model, type = "HC1") # Sigma_pp
+  coef_matrix <- matrix(coef(model))
+  nomdf <- length(inst) # k ~ number of instruments
+  # Cragg-Donald Wald F statistic) - Non Robust F statistic
+  f_n <- crossprod(coef_matrix[idx], solve(vcov_n[idx, idx]) %*% coef_matrix[idx]) / nomdf
+  # Kleibergen-Paap rk Wald F statistic - Robust F statistic
+  f_r <- crossprod(coef_matrix[idx], solve(vcov_r[idx, idx]) %*% coef_matrix[idx]) / nomdf
+  list("Fn" = f_n, "Fr" = f_r)
   
 }
 

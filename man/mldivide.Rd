@@ -2,17 +2,17 @@
 % Please edit documentation in R/funs.R
 \name{mldivide}
 \alias{mldivide}
-\title{Matlab backslash (\) operator}
+\title{Matlab mldivide (\) operator}
 \usage{
 mldivide(A, B, pinv = TRUE)
 }
 \description{
 Solve systems of linear equations Ax = B for x
-x = `A\B` solves the system of linear equations A*x = B. 
+x = `A\\B` solves the system of linear equations A*x = B. 
 The matrices A and B must have the same number of rows. 
 MATLAB® displays a warning message 
 * if A is badly scaled or nearly singular, but performs the calculation regardless.
-If A is a scalar, then `A\B` is equivalent to `A.\B.`
-If A is a square n-by-n matrix and B is a matrix with n rows, then x = `A\B` is a solution to the equation A*x = B, if it exists.
-If A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then `A\B` returns a least-squares solution to the system of equations A*x= B.
+If A is a scalar, then `A\\B` is equivalent to `A.\\B.`
+If A is a square n-by-n matrix and B is a matrix with n rows, then x = `A\\B` is a solution to the equation A*x = B, if it exists.
+If A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then `A\\B` returns a least-squares solution to the system of equations A*x= B.
 }
