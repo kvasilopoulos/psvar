@@ -1,23 +1,22 @@
 
-source("R/funs.R")
-
-estimate_var <- function(vardata, proxydata, lags = 4) {
-  lmatrix <- lagmatrix(vardata, lags)
-  lhs <- as.matrix(vardata[-c(1:lags), ])
-  t <- nrow(lhs)
-  n <- ncol(lhs)
-  constant <- ones(t, 1) # constant
-  
-  rhs <- cbind(lmatrix, constant)
-  beta <-  reg_xy(rhs, lhs)
-  res <- lhs - rhs %*% beta
-  Sigma <- crossprod(res) / (t - n * lags - 1)
-  list(
-    lags = lags,
-    res = res,
-    beta = beta
-  )
-}
+# 
+# estimate_var <- function(vardata, lags = 4) {
+#   lmatrix <- lagmatrix(vardata, lags)
+#   lhs <- as.matrix(vardata[-c(1:lags), ])
+#   t <- nrow(lhs)
+#   n <- ncol(lhs)
+#   constant <- ones(t, 1) # constant
+#   
+#   rhs <- cbind(lmatrix, constant)
+#   beta <-  reg_xy(rhs, lhs)
+#   res <- lhs - rhs %*% beta
+#   Sigma <- crossprod(res) / (t - n * lags - 1)
+#   list(
+#     lags = lags,
+#     res = res,
+#     beta = beta
+#   )
+# }
 
 
 id_proxy <- function(model, mshocks) {
@@ -29,7 +28,7 @@ id_proxy <- function(model, mshocks) {
   n <- ncol(res)
   k <- ncol(mshocks)
   
-  if(k > n) {
+  if (k > n) {
     stop("the number of instruments must equal the number of shocks to be identified ")
   }
   
@@ -73,7 +72,7 @@ id_proxy <- function(model, mshocks) {
   
   # Fstat
   tempU <- res[,1:k] - mshocks %*% betaIV[,1:k]
-  tempY <- mshocks %*% betaIV[,1:k] -mean(res[,1:k])
+  tempY <- mshocks %*% betaIV[,1:k] - mean(res[,1:k])
   kk <- k - 1
   Fmat <- (crossprod(tempY)/kk) %*% (crossprod(tempU)/(t-k-1))
   Fstat <- diag(Fmat)
@@ -134,7 +133,7 @@ irf_chol <- function(model, n_imp = 20, shocksize = 1) {
   
   irs <- matrix(0, nrow = lags + n_imp, n)
   colnames(irs) <- nms
-  irs[lags + 1, ] = - b1[,1]/b1[1,1] * shocksize
+  irs[lags + 1, ] = b1[,1]/b1[1,1] * shocksize
   for (jj in 2:n_imp) {
     lvars <- t(irs[seq(lags + jj - 1, jj, -1), ])
     irs[lags + jj, ] <- t(c(lvars)) %*% beta[1:(lags * n), ]
@@ -224,7 +223,7 @@ boot_proxy <- function(model, vardata, proxydata, nboot = 500, n_imp = 20) {
 
 plot_irf <- function(x, y, alpha = 0.68) {
   ci <- 1 - alpha
-  pr <- apply(y, c(1,2), quantile, probs = c(ci/2, 1-ci/2), na.rm = TRUE)
+  pr <- apply(y, c(1,2), quantile, probs = c(ci/2, 1 - ci/2), na.rm = TRUE)
   lower <- pr[1,,]
   upper <- pr[2,,]
   library(purrr)
@@ -241,7 +240,10 @@ plot_irf <- function(x, y, alpha = 0.68) {
     geom_line(aes(horizon, lower), linetype = "dashed") +
     geom_line(aes(horizon, upper), linetype = "dashed") +
     facet_wrap(~name, scales = "free_y") +
-    theme_bw()
+    theme_bw() +
+    theme(
+      strip.background = elem
+    )
   
 }
 
