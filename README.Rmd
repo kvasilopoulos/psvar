@@ -1,7 +1,5 @@
 ---
-title: "My Title"
-output:
-  pdf_document: default
+output: github_document
 ---
 <!--  github_document:
     pandoc_args: --webtex -->
@@ -10,7 +8,9 @@ output:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
 )
 ```
 
@@ -19,68 +19,21 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
+```{r use-case}
+library(psvar)
+model <- estimate_var(ramey_econ214[, c(5, 2, 4, 6)], p = 12) 
+irfs <- irf_psvar(model, ramey_econ214[, 10], irhor = 50)
+plot_psvar(irfs)
+```
 
 
+## Installation
+
+You can install the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("kvasilopoulos/psvar")
+```
 
 
-# Methodology
-
-Let   $Y_t$  be  an  n×1  vector  of  observables.  We  assume  that  the  dynamics  of  the  observables are described by a system of linear simultaneous equations
-
-$$
- A Y _ { t } = \sum _ { j = 1 } ^ { p } \alpha _ { j } Y _ { t - j } + \varepsilon _ { t } 
-$$
-
-
-$$
- Y _ { t } = \sum _ { j = 1 } ^ { p } \delta _ { j } Y _ { t - j } + B \varepsilon _ { t } 
-$$
-
-$$ u_t =  B \epsilon_t $$
-
-$$
- E ( u _ { t } u _ { t } ^ { \prime } ) = B B ^ { \prime } = \Sigma _ { u } 
-$$
-
-$$ 
-\left[ 
-  \begin{array} 
-    { c } { u _ { 1 , t } } \\ { ( k \times 1 ) } \\ { u _ { 2 , t } } \\ { ( N - k \times 1 ) } 
-  \end{array} \right] = 
- \left[ 
-  \begin{array} { c c } { \beta_{ 11 } } & { \beta_{ 12 } } \\ { ( k \times k ) } & { ( k \times N - k ) } \\ { \beta _ { 21 } } & { \beta _ { 22 } } \\ { ( N - k \times k ) } & { ( N - k \times N - k ) } 
- \end{array} \right] \left[ 
-    \begin{array}{c} 
-    { \epsilon _ { 1 , t } } \\ { ( k \times 1 ) } \\ { \epsilon _ { 2 , t } } \\ { ( N - k \times 1 ) } 
-    \end{array} 
-  \right] 
-$$
-  
-  
-Consider the following partitioning of B:
-
-$$
- B = \left[ \begin{array} { c c } { \beta _ { 1 } } & { \beta _ { 2 } } \\ { n \times k } & { n \times ( n - k ) } \end{array} \right], \quad \beta _ { 1 } = \left[ \begin{array} { c c } { \beta _ { 11 } ^ { \prime } } & { \beta _ { 21 } ^ { \prime } } \\ { k \times k } & { k \times ( n - k ) } \end{array} \right] ^ { \prime } , \quad \beta _ { 2 } = \left[ \begin{array} { c c } { \beta _ { 12 } ^ { \prime } } & { \beta _ { 22 } ^ { \prime } } \\ { ( n - k ) \times k } & { ( n - k ) \times ( n - k ) } \end{array} \right] ^ { \prime } 
-$$
-
-
-
-$$
- \beta _ { 21 } = ( \Sigma _ { mu _ { 1 } } ^ { - 1 } \Sigma _ { mu _ { 2 } ^ { \prime } } ) ^ { \prime } \beta _ { 11 } 
-$$
-
-
-$$
- \left. \begin{array} { l } 
- { \beta _ { 21 } \beta _ { 11 } ^ { - 1 } = ( \Sigma _ { mu 1 } ^ { - 1 } \Sigma _ { mu _ { 2 } ^ { \prime } } ) ^ { \prime } } \\  { \beta _ { 12 } \beta _ { 22 } ^ { - 1 } = ( \beta _ { 12 } \beta _ { 12 } ^ { \prime } ( \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { \prime } + ( \Sigma _ { 21 } - \beta _ { 21 } \beta _ { 11 } ^ { - 1 } \Sigma _ { 11 } ) ^ { \prime } ) ( \beta _ { 22 } \beta _ { 22 } ^ { \prime - 1 } ) }\\ { \beta _ { 12 } \beta _ { 12 } ^ { \prime } = ( \Sigma _ { 21 } - \beta _ { 21 } \beta _ { 11 } ^ { - 1 } \Sigma _ { 11 } ) ^ { \prime } Z ^ { - 1 } ( \Sigma _ { 21 } - \beta _ { 21 } \beta _ { 11 } ^ { - 1 } \Sigma _ { 11 } ) } \\ { \beta _ { 22 } \beta _ { 22 } ^ { \prime } = \Sigma _ { 22 } + \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ( \beta _ { 12 } \beta _ { 12 } ^ { \prime } - \Sigma _ { 11 } ) ( \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { \prime } } \\ { \beta _ { 11 } \beta _ { 11 } ^ { \prime } = \Sigma _ { 11 } - \beta _ { 12 } \beta _ { 12 } ^ { \prime } } \end{array} \right. 
-$$
-
-$$
- Z = \beta _ { 21 } \beta _ { 11 } ^ { - 1 } \Sigma _ { 11 } ( \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { \prime } - ( \Sigma _ { 21 } ( \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { \prime } + \beta _ { 21 } \beta _ { 11 } ^ { - 1 } \Sigma _ { 21 } ^ { \prime } ) + \Sigma _ { 22 } 
-$$
-
-
-
-$$
- \left. \begin{array}{l}{ \beta _ { 11 } S _ { 1 } ^ { - 1 } = ( I - \beta _ { 12 } \beta _ { 22 } ^ { - 1 } \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { - 1 } }\\{ \beta _ { 21 } S _ { 1 } ^ { - 1 } = \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ( I - \beta _ { 12 } \beta _ { 22 } ^ { - 1 } \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) ^ { - 1 } }\\{ S _ { 1 } S _ { 1 } ^ { \prime } = ( I - \beta _ { 12 } \beta _ { 22 } ^ { - 1 } \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) \beta _ { 11 } \beta _ { 11 } ^ { \prime } ( I - \beta _ { 12 } \beta _ { 22 } ^ { - 1 } \beta _ { 21 } \beta _ { 11 } ^ { - 1 } ) }\end{array} \right. 
-$$
