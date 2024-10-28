@@ -25,7 +25,6 @@ dat <- ramey_econ214[, c(5, 2, 4, 6)]
 inst <- ramey_econ214[, 10]
 ```
 
-
 ```{r irfs}
 model <- estimate_var(dat, p = 12) 
 irfs <- irf_psvar(model, m = inst, irhor = 50)

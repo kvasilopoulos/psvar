@@ -15,8 +15,10 @@ estimate_var <- function(Y, p = 2) {
   
   list(
     matY = matY, 
+    matX = matX,
     res = res, bet = bet,
-    t = t, n = n, p = p
+    t = t, n = n, p = p,
+    sigma = sigmau
   )
 }
 
@@ -25,13 +27,15 @@ calc_fstat <- function(Y, m, p = 2) {
   dt <- cbind(Y, m) 
   nms <- colnames(dt)
   idm <- length(nms)
-  all_fstat <- list()
-  for (i in 1:length(nms)) {
-    all_fstat[[i]] <- fstat(endog = nms[1], exo = nms[-idm], inst = nms[idm],  
+  # all_fstat <- list()
+  # for (i in 1:length(nms)) {
+    all_fstat <- fstat(endog = nms[1], exo = nms[-idm], inst = nms[idm],  
                             lags = p, data = dt)
-  }
+  # }
   all_fstat
 }
+
+# https://github.com/danmrc/weak-instruments-r
 
 
 #' @importFrom sandwich vcovHC
@@ -59,25 +63,61 @@ fstat <- function(endog, exo, inst, lags = 2, data) {
   f_n <- crossprod(coef_matrix[idx], solve(vcov_n[idx, idx]) %*% coef_matrix[idx]) / nomdf
   # Kleibergen-Paap rk Wald F statistic - Robust F statistic
   f_r <- crossprod(coef_matrix[idx], solve(vcov_r[idx, idx]) %*% coef_matrix[idx]) / nomdf
-  list("Fn" = f_n, "Fr" = f_r)
+  list("Fn" = f_n, "Fr" = f_r, "chi_crit" = 3.84) # qchisq(.95, df=1) 
   
 }
 
-irf_psvar_single <- function(model, m, irhor = 20, shocksize = -1) {
+# reliability <- function(model, m) {
+#   
+#   mres <- model$res
+#   t <- nrow(mres)
+#   n <- ncol(mres)
+#   p <- model$p
+#   bet <- model$bet
+#   matM <- as.matrix(m)[-c(1:p),, drop = FALSE]
+#   
+#   # Identification
+#   gamma <- crossprod(mres, matM) / t
+#   
+#   
+#   Sigmm <- crossprod(matM)/ t
+#   ED <- eye(k) * sum(sum(VAR.m,2)~=0)/tt
+#   mu1 <- t(m) %*% res / t
+#   PhiPhip <- mu1 %*% pinv(b11pb11p) * mu1
+#   RM <- pinv(Sigmm) %*% PhiPhip %*% pinv(ED)
+#   RMeigs <- sort(eigen(RM)$values)
+#   list(RM = RM, RMeigs = RMeigs)
+# }
+
+
+irf_psvar_single <- function(model, m, irhor = 20, shocksize = -1, res_on = NULL) {
   
+  # component <- match.arg(component)
   mres <- model$res
   t <- nrow(mres)
   n <- ncol(mres)
   p <- model$p
   bet <- model$bet
+  
   matM <- as.matrix(m)[-c(1:p),, drop = FALSE]
   
   # Identification
   gamma <- crossprod(mres, matM) / t
   
+  #  component = c("simple","reverse")
+  # if(component == "reverse") {
+  #   gamma <- eye(n, 1) - gamma
+  # }
+  
   # Impulse responses
   irs <- matrix(0, irhor + p, n, dimnames = list(NULL, colnames(model$matY)))
   irs[p + 1, ] <- shocksize * gamma / gamma[1]
+  
+  if(!is.null(res_on)) {
+    bet[,res_on] <- 0
+    irs[,res_on] <- 0
+  }
+  
   for (jj in 2:irhor) {
     lvars <- c(t(irs[(p + jj - 1):jj, ])) # collapse to vector
     irs[p + jj, ] <- lvars %*% bet[-1, ] # remove constant
@@ -86,7 +126,7 @@ irf_psvar_single <- function(model, m, irhor = 20, shocksize = -1) {
   irs
 }
 
-irf_boot_psvar_single <- function(model, m, irhor = 20, nboot = 500, shocksize = 1) {
+irf_boot_psvar_single <- function(model, m, irhor = 20, nboot = 500, shocksize = 1, res_on = NULL) {
   
   # demean by column - wb not needed but MR have it
   mres <- apply(model$res, 2, function(y) y - mean(y)) 
@@ -109,20 +149,22 @@ irf_boot_psvar_single <- function(model, m, irhor = 20, nboot = 500, shocksize =
     mboot <- c(matM[1:p], matM[-c(1:p)] * wb[-c(1:p)])
     model <- estimate_var(varsb[-c(1:p),], p = p)
     birs[, , jj] <- irf_psvar_single(model, m = mboot,
-                                     irhor = irhor, shocksize = shocksize)
+                                     irhor = irhor, shocksize = shocksize, res_on = res_on)
   }
   birs
 }
 
 #' @export
-irf_psvar <- function(model, m, irhor = 20, nboot = 500, shocksize = 1) {
-  irs <- irf_psvar_single(model, m = m, irhor = irhor, shocksize = shocksize)
-  birs <- irf_boot_psvar_single(model, m = m, irhor = irhor, shocksize = shocksize)
-  dimnames(birs) <- list(NULL, colnames(irs), NULL)
+irf_psvar <- function(model, m, irhor = 20, boot = TRUE, nboot = 500, shocksize = 1, res_on = NULL) {
+  irs <- irf_psvar_single(model, m = m, irhor = irhor, shocksize = shocksize, res_on = res_on)
+  if(boot) {
+    birs <- irf_boot_psvar_single(model, m = m, irhor = irhor, shocksize = shocksize, res_on = res_on)
+    dimnames(birs) <- list(NULL, colnames(irs), NULL)
+  }else{
+    birs <- NULL
+  }
   list(irfs = irs, boot_irfs = birs)
 }
-
-
 
 #' @importFrom tibble enframe
 #' @importFrom purrr map_dbl
@@ -139,30 +181,35 @@ tidy_irf_psvar <- function(x, names = NULL,
   boot_dist <- array_to_list(x$boot_irfs, margin = c(1,2)) %>%
     enframe() %>% select(distr = value)
   
-  bind_cols(dplyr::arrange(irfs, name), boot_dist) %>% 
+  out <- bind_cols(dplyr::arrange(irfs, name), boot_dist) %>% 
     mutate(
       lower = map_dbl(distr, quantile, probs = probs[1]),
-      upper = map_dbl(distr, quantile, probs = probs[2]),
-      lower_sec = map_dbl(distr, quantile, probs = sec_probs[1]),
-      upper_sec = map_dbl(distr, quantile, probs = sec_probs[2])
+      upper = map_dbl(distr, quantile, probs = probs[2])
     )
+  if (!is.null(sec_probs)) {
+    out <- out %>% 
+      mutate(
+        lower_sec = map_dbl(distr, quantile, probs = sec_probs[1]),
+        upper_sec = map_dbl(distr, quantile, probs = sec_probs[2])
+      )
+  }
+  out
 }
 
 #' @importFrom ggplot2 ggplot aes geom_line geom_hline geom_ribbon
 #' @importFrom ggplot2 facet_wrap theme_bw theme element_blank element_line
 #' @export
-plot_psvar <- function(irf_obj, title = NULL, ...) {
+plot_psvar <- function(irf_obj, ncol = NULL, ...) {
+  dots <- list(...)
+  
+  gg <- 
     ggplot(tidy_irf_psvar(irf_obj, ...)) +
     # geom_hline(aes(yintercept = 0), linetype = "dotted") +
     geom_line(aes(horizon, irf)) +
     geom_line(aes(horizon, lower), linetype = "dashed", color = "grey50") +
     geom_ribbon(aes(horizon, ymax = upper, ymin = lower), alpha = 0.2, fill = "grey50") +
     geom_line(aes(horizon, upper), linetype = "dashed", color = "grey50") +
-    geom_line(aes(horizon, lower_sec), linetype = "dashed", color = "grey75") +
-    geom_ribbon(aes(horizon, ymax = lower, ymin = lower_sec), alpha = 0.2, fill = "grey75") +
-    geom_line(aes(horizon, upper_sec), linetype = "dashed", color = "grey75") +
-    geom_ribbon(aes(horizon, ymax = upper_sec, ymin = upper), alpha = 0.2, fill = "grey75") +
-    facet_wrap(~name, scales = "free") +
+    facet_wrap(~name, scales = "free", ncol = ncol) +
     theme_bw() +
     theme(
       strip.background = element_blank(),
@@ -171,4 +218,12 @@ plot_psvar <- function(irf_obj, title = NULL, ...) {
       # panel.grid.major = element_blank()
       panel.grid.major = element_line(linetype = "dashed")
     )
+  if(!is.null(dots$sec_probs)) {
+    gg <- gg +
+      geom_line(aes(horizon, lower_sec), linetype = "dashed", color = "grey75") +
+      geom_ribbon(aes(horizon, ymax = lower, ymin = lower_sec), alpha = 0.2, fill = "grey75") +
+      geom_line(aes(horizon, upper_sec), linetype = "dashed", color = "grey75") +
+      geom_ribbon(aes(horizon, ymax = upper_sec, ymin = upper), alpha = 0.2, fill = "grey75")
+  }
+  gg
 }

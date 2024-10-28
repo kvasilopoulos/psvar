@@ -26,6 +26,7 @@ attr(ramey2016, "info") <- info_ramey2016
 
 usethis::use_data(ramey2016, overwrite = TRUE)
 
+
 # Mertens and Ravn 2013 ---------------------------------------------------
 
 mr2013_quarterly <- readxl::read_excel("data-raw/MR_AER_DATASET.xlsx", sheet = 1) %>% 
@@ -49,5 +50,28 @@ mr2013 <- list(
 names(mr2013) <- c("quarterly", "annual")
 
 usethis::use_data(mr2013, overwrite = TRUE)
+
+# Killian 2008 ------------------------------------------------------------
+
+# killian_2008 <- 
+killian2008 <-
+  read_excel("data-raw/killian2008.xlsx") %>% 
+  slice(-1) %>% 
+  mutate(date = as.Date(paste(YEAR, MONTH, "01", sep = "-"))) %>% 
+  select(date, dprod = Dprod, rea, rpo, proxy_supply = `Killian 2008`)
+
+usethis::use_data(killian2008, overwrite = TRUE)
+
+# bloom 2009 --------------------------------------------------------------
+
+bloom2009 <- read_csv("data-raw/Bloom_VARDATA.csv") %>%
+  mutate(date = as.Date(paste(YEAR, MONTH, "01", sep = "-"))) %>% 
+  select(-YEAR, -MONTH) %>% 
+  select(date, everything())
+
+usethis::use_data(bloom2009, overwrite = TRUE)
+
+
+# Gertler Karadi 2015 -----------------------------------------------------
 
 

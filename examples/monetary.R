@@ -21,21 +21,22 @@ attributes(ramey2016)$info %>%
 pdata <- ramey2016 %>% 
   dplyr::select(DATES, GS1, LIP, EBP, LCPI, FF4_TC) %>% 
   tidyr::drop_na() %>% 
-  dplyr::filter(DATES >= "1991-01-01") 
+  dplyr::filter(DATES >= "1991-01-01", DATES <= "2012-06-01")
+  # dplyr::filter(DATES >= "1991-01-01") 
 
 estimate_var(pdata[, 2:5], p = 12) %>% 
   irf_psvar(pdata[,6], shocksize = 0.2, irhor = 50) %>% 
-  plot_psvar2()
+  plot_psvar()
 
 
-plot_psvar2(pdata[, 2:5], pdata[,6], p = 4, shocksize = 0.2, irhor = 50)
 
-boot_obj <- psvar_boot(pdata[, 2:5], pdata[,6], p = 4, shocksize = 0.2)
-plot_psvar(boot_obj, probs = c(0.1, 0.9))
-
-Y = as.matrix(pdata[, 2:5])
-m = as.matrix(pdata[,6], , drop = FALSE)
-
+fstat(
+  data = pdata, 
+  lags = 12,
+  endog = "GS1", 
+  inst = "FF4_TC", 
+  exo = c("GS1", "LIP", "EBP", "LCPI")
+)
 
 
 # mr2013 ------------------------------------------------------------------
